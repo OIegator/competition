@@ -2,37 +2,52 @@ clear all;
 close all;
 clc;
 
-total_citizens = 100;
-simulation_length = 100;
-transmission_rate = 1;
-recovery_rate = 0.01;
-death_rate = 0.01;
-isolation_rate = 0;
-transmission_radius = 100;
-% Each citizen has 6 params:
+totalAnimals = 100;
+simulationLength = 100;
+powerDifference = 0.5;
+pastureRate = 0.01;
+deathRate = 0.01;
+shelterRate = 0.1;
+starvationRate = 0.3;
+fieldOfView = 50;
+numberOfEnemies = 50;
+% Each animal has 7 params:
 % 4 coords - current location (x,y) and destination (x,y)
 % Status code:
-% 0 - healthy, 1 - ill, 2 - recovered (immume), 3 - dead
-% Behaviuor code: 0 - acts as usual, 1 - on self-isolation
+% 0 - hunting, 1 - sleepy, 2 - hungry, 3 - dead
+% Behaviuor code: 0 - in hunting, 1 - taking a nap, or sitting in shelter
+% Animal type: 0 - first type of animal, 1 - second type of animal
 
-citizens = zeros(total_citizens, 6);
-citizens(:,1:4) = randi([0, 1000], [total_citizens, 4]);
-citizens(1,5) = 1;
-for i = 1:total_citizens
-  citizens(i,6) = rand < isolation_rate;
+animals = zeros(totalAnimals, 7);
+animals(:,1:4) = randi([0, 1000], [totalAnimals, 4]);
+animals(1,5) = 1;
+for i = 1:totalAnimals
+  animals(i,6) = rand < shelterRate;
+  if (rand < starvationRate)
+    animals(i,5) = 2;
+  end
+  if (i <= numberOfEnemies)
+      animals(i,7) = 0;
+  else
+      animals(i,7) = 1;
+  end
 end
 video = VideoWriter('output');
 video.FrameRate = 30;
 open(video);
-for i = 1:simulation_length
-  frame = draw_population(citizens);
+for i = 1:simulationLength
+  frame = drawPopulation(animals);
   writeVideo(video, frame);
-  citizens = update_positions(citizens);
-  citizens = update_status(citizens, transmission_rate, transmission_radius);
-  citizens = update_recovery(citizens, recovery_rate, death_rate);
+  animals = updatePositions(animals);
+  animals = combatResult(animals, powerDifference, fieldOfView);
+  animals = updateStarvation(animals, pastureRate, deathRate);
 end
 close(video);
-sprintf('Never was ill: %d', nnz(citizens(citizens(:,5)==0)))
-sprintf('Still ill: %d', nnz(citizens(citizens(:,5)==1)))
-sprintf('Recovered: %d', nnz(citizens(citizens(:,5)==2)))
-sprintf('Dead: %d', nnz(citizens(citizens(:,5)==3)))
+sprintf('First type: stil in hunting - %d', nnz(animals(animals(:,5)==0 & animals(:,7)==0)))
+sprintf('First type: still starving - %d', nnz(animals(animals(:,5)==2 & animals(:,7)==0)))
+sprintf('First type: full and sleepy - %d', nnz(animals(animals(:,5)==1 & animals(:,7)==0)))
+sprintf('First type: dead - %d', nnz(animals(animals(:,5)==3 & animals(:,7)==0)))
+sprintf('Second type: stil in hunting - %d', nnz(animals(animals(:,5)==0 & animals(:,7)==1)))
+sprintf('Second type: still starving - %d', nnz(animals(animals(:,5)==2 & animals(:,7)==1)))
+sprintf('Second type: full and sleepy - %d', nnz(animals(animals(:,5)==1 & animals(:,7)==1)))
+sprintf('Second type: dead - %d', nnz(animals(animals(:,5)==3 & animals(:,7)==1)))
