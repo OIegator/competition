@@ -1,5 +1,5 @@
 function [frame] = drawPopulation(population)
-    clf;
+    cla;
     [n,~] = size(population);
     for i = 1:n
         p = population(i,:);
